@@ -9,6 +9,7 @@ export interface Classifier {
 export const classifier: Classifier = {
   async classify(date, sources) {
     try {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) throw new Error('Offline')
       const response = await fetch('/api/classify', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date, sources }), signal: AbortSignal.timeout(45000),

@@ -13,7 +13,7 @@ await new Promise(resolve => listener.close(resolve))
 const url = `http://127.0.0.1:${port}`
 const temporary = await mkdtemp(join(tmpdir(), 'dcr-print-'))
 const serverEnv = { ...process.env, PORT: String(port), HOST: '127.0.0.1', OPENAI_API_KEY: '', DOTENV_CONFIG_QUIET: 'true' }
-const server = spawn(process.execPath, ['server/index.mjs', '--dev'], { env: serverEnv, stdio: 'inherit' })
+const server = spawn(process.execPath, ['server/index.mjs'], { env: serverEnv, stdio: 'inherit' })
 let browser
 try {
   for (let attempt = 0; ; attempt++) {
@@ -76,8 +76,18 @@ try {
       assert(xMin >= 0 && yMin >= 0 && xMax <= Number(width) && yMax <= Number(height), '欄位文字超出 PDF 頁面')
     }
   }
+  await page.emulateMedia({ media: 'screen' })
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null)
+  await page.context().setOffline(true)
+  await page.reload()
+  await page.getByRole('heading', { name: '工作日誌', exact: true }).waitFor()
+  await page.getByRole('button', { name: '新增敘述' }).click()
+  await page.locator('textarea').last().fill('D區完成2支鋼柱吊裝')
+  await page.getByRole('button', { name: 'AI 整理日誌' }).click()
+  await page.getByText('本次採用示範規則分類。', { exact: false }).waitFor()
+  await page.locator('.report-row').filter({ hasText: 'D區 鋼柱吊裝' }).first().waitFor()
   assert.deepEqual(errors, [])
-  console.log(`通過：手機版操作、IndexedDB 重開讀取、示範分類、報表編輯、A4 PDF（${pages.length} 頁，無可見按鈕或測試欄位裁切）。`)
+  console.log(`通過：手機版操作、IndexedDB 重開讀取、示範分類、報表編輯、離線重新載入、A4 PDF（${pages.length} 頁，無可見按鈕或測試欄位裁切）。`)
 } finally {
   await browser?.close()
   server.kill()

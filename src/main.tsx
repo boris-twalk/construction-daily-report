@@ -424,3 +424,9 @@ function RowEditor({ row, onSave, onCancel, onSplit }: {
 
 import { createRoot } from 'react-dom/client'
 createRoot(document.getElementById('root')!).render(<App />)
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  void navigator.serviceWorker.register('/dcr-offline.js').catch(() => {
+    // IndexedDB and the rule-based classifier are still available in the open page.
+  })
+}
