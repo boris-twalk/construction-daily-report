@@ -7,7 +7,8 @@ import { aiShape, classificationSchema, fields, requestSchema } from '../src/sch
 
 const app = express()
 app.use(express.json({ limit: '512kb' }))
-const key = process.env.OPENAI_API_KEY?.trim()
+const demoOnly = process.env.DCR_DEMO_ONLY === 'true'
+const key = demoOnly ? undefined : process.env.OPENAI_API_KEY?.trim()
 const client = key ? new OpenAI({ apiKey: key, timeout: 35000, maxRetries: 0 }) : undefined
 app.get('/api/status', (_, res) => res.json({ mode: client ? 'ai' : 'demo' }))
 app.post('/api/classify', async (req, res) => {

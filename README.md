@@ -46,3 +46,28 @@ npm run test:print
 - `src/storage.ts` 管理日期索引、交易及匯入。
 - `src/classifier.ts` 提供分類介面及示範回退，`server/index.mjs` 管理 AI 金鑰及模型呼叫。
 - `src/delta.ts` 依來源內容比對差異，記錄建議變更與提醒。相似工作項目保留各自的數量，讓使用者核對。
+
+## Render 公開測試站
+
+使用 **Web Service** 執行 Node.js 與 Express。Express 同時提供 `dist/` 的 React 靜態檔、離線 Service Worker，以及同來源的 `/api/*` 路由。一個 Render HTTPS 網址即可從 Windows 和手機開啟，前端 API 使用相對路徑。
+
+| 設定 | 值 |
+| --- | --- |
+| 儲存庫 / 分支 | `boris-twalk/construction-daily-report` / `main` |
+| Root Directory | 留空（儲存庫根目錄） |
+| Runtime / Plan | Node / Free（依帳戶可用方案選擇） |
+| Node 版本 | `NODE_VERSION=24.22.1` |
+| Build Command | `npm ci --include=dev && npm run build` |
+| Start Command | `npm start` |
+| Health Check Path | `/api/status` |
+| 環境變數 | `NODE_ENV=production`、`HOST=0.0.0.0`、`DCR_DEMO_ONLY=true` |
+| PORT | 留給 Render 注入，由 Express 讀取 `process.env.PORT` |
+| Auto-Deploy | 關閉，驗證後手動部署 |
+
+1. 在 Render Dashboard 選擇 **New → Blueprint**，連接上述 GitHub 儲存庫與 `main`，選用根目錄的 `render.yaml`。審閱方案和環境變數後再部署。也可以選 **New → Web Service** 並手動填入表格設定。
+2. 保持 `DCR_DEMO_ONLY=true`，並讓 `OPENAI_API_KEY` 空缺。公開展示期間請使用合成測試文字。此模式會在伺服器端停用 OpenAI，即使環境誤帶金鑰也不會建立 OpenAI 用戶端。
+3. 部署成功後，複製 Render 頁面提供的實際 `https://…onrender.com` 網址，再用 Windows 和手機瀏覽器開啟。Free 服務閒置後，首次請求可能需要等候啟動。
+4. 開啟 `/api/status`，確認得到 `{"mode":"demo"}`。以虛構文字新增或編輯敘述，按「AI 整理日誌」確認進入示範分類，重新整理確認資料仍在，再測試列印與 JSON 備份。
+5. 在手機以同一網址重複測試。IndexedDB 按網站來源及瀏覽器設定檔隔離，Windows 的草稿不會出現在手機。要在另一台裝置使用同一份測試日誌，請手動匯出及匯入 JSON。
+
+公開示範站未啟用付費 AI 分類。未來如果要開放真正 AI 給外部測試者，須另外加入身分驗證、使用配額及伺服器端請求限制，再以 Render 的秘密環境變數設定金鑰。
